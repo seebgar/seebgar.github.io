@@ -5,35 +5,68 @@ import time
 Sebastian Garcia 201630047
 '''
 
+STUDENT_ID = (201630047 % 4 + 7)  # == 10
+EVENT_COUNTER = 1
+
 DEVICE_ID = ""
 HOME_KEY_EVENT = 3
+BACK_KEY_EVENT = 4
 KEYBOARD_ENTER = 66
 CONTACTS_PACKAGE = "com.android.contacts"
 FIRST_APP_CORD_X = 120
 FIRST_APP_CORD_Y = 355
 WHITE_SPACE_CORD_X = 540
 WHITE_SPACE_CORD_Y = 1700
-LONG_WAIT = 2
-SHORT_WAIT = 0.5
+LONG_WAIT = 1.5
+SHORT_WAIT = 0.3
 SEARCHBAR_CORD_X = 542
 SEARCHBAR_CORD_Y = 1700
+EXTERNAL_APPLICATION_PATH = "../RollerPlanet.apk"
+EXTERNAL_PACKAGE = "com.brutumFulmen.RollerPlanet"
 
 REPORT = ""
 REPORT_FILE = "report_q2.html"
 PLACEHOLDER = "INSERT_REPORT_HERE"
 
 
-def start_process():
+def start_process(n):
     # GET DEVICE ID
     set_device_id()
+
+    write_report(
+        "<p> <strong>Executed using Python 3.7.4</strong> </p>")
+    write_report(
+        "<p>Android Debug Bridge version 1.0.41 <br/>Version 29.0.6-6198805 <br/>Installed as /usr/local/bin/adb <br/>Using MacOS Catalina</p>")
+
+    install_application(EXTERNAL_APPLICATION_PATH)
+    time.sleep(3)
+    start_package(EXTERNAL_PACKAGE)
+    write_report(
+        "<br/> <br/> <p> <strong>0.</strong> &nbsp; Installing external APK</p> <br/>")
+    time.sleep(7)
+    take_screenshot("ExternalAPK")
+
+    while n > 0:
+        actions(n)
+        n -= 1
+
+    stop_package(EXTERNAL_PACKAGE)
+    uninstall_application(EXTERNAL_PACKAGE)
+
+    write_on_file(REPORT_FILE, REPORT)
+
+
+def actions(n):
+    write_report(f"<br/><br/> <h2>Iteration # {n}</h2> <hr/> ")
 
     '''
     1. Go to home menu and click on the frist application available on the launcher
     '''
     home()
+    time.sleep(SHORT_WAIT)
 
     write_report(
-        f"<br/> <br/> <p> <strong>1.</strong> &nbsp; Go to home menu</p> <br/>")
+        f"<br/> <p> <strong>1.</strong> &nbsp; Go to home menu</p> <br/>")
     take_screenshot("HomeScreen")
 
     swipe_up()
@@ -44,6 +77,8 @@ def start_process():
     write_report(
         f"<br/> <br/> <p> <strong>1.1.</strong> &nbsp; Click on the first application available on the launcher</p> <br/> ")
     take_screenshot("FirstApplicationOpen")
+
+    event_counter()  # handles the BACK action if needed
 
     '''
     2. Go to the home menu and long tap the first 3 apps available on the launcher
@@ -65,26 +100,30 @@ def start_process():
     perfom_long_tap(FIRST_APP_CORD_X + 220 + 220, FIRST_APP_CORD_Y)
     take_screenshot("ThirdLongTap")
 
-    home()
+    event_counter()  # handles the BACK action if needed
 
     # TODO DESDE AQUI ES DIFERENTE
     '''
     3. Verify the current battery percentage and write it in the report.
     '''
-    battery_status()
+    batterystatus()
     write_report(f"<br/> <br/> <p> <strong>3.</strong> &nbsp; Verify the current battery percentage - ADB checks the status and then prints the result on Google Search Bar. </p> <br/>")
     take_screenshot("Battery-Level")
     home()
 
+    event_counter()  # handles the BACK action if needed
+
     '''
     4. Turn on bluetooth
     '''
-    turn_on_bluetooth()
+    turnonbluetooth()
     write_report(f"<br/> <br/> <p> <strong>4.</strong> &nbsp; Turn on bluetooth - ADB checks the status and then prints the result on Google Search Bar. </p> <br/>")
     take_screenshot("BluetoothOn-Status")
     home()
 
     # TODO HASTA AQUI ES DIFERENTE
+
+    event_counter()  # handles the BACK action if needed
 
     '''
     5. Launch the contacts app and add a new contact to the contact's list
@@ -104,13 +143,9 @@ def start_process():
     take_screenshot("ContactsList")
 
     time.sleep(LONG_WAIT)
-    home()
 
-    write_report(
-        f"<br/> <br/> <p> <strong>Executed using Python 3.7.4</strong> </p>")
-    write_report(
-        "<p>Android Debug Bridge version 1.0.41 <br/>Version 29.0.6-6198805 <br/>Installed as /usr/local/bin/adb</p>")
-    write_on_file(REPORT_FILE, REPORT)
+    event_counter()  # handles the BACK action if needed
+    home()
 
 
 def execute_process(cmd, process_name):
@@ -138,7 +173,7 @@ def set_device_id():
 
 def perfom_keyevent(for_key):
     cmd = f"adb {DEVICE_ID} shell input keyevent {for_key}"
-    execute_process(cmd, "Home Key Event")
+    execute_process(cmd, f"{for_key} Key Event")
 
 
 def home():
@@ -176,7 +211,7 @@ def perfom_long_tap(coordX, coordY):
     time.sleep(SHORT_WAIT)
 
 
-def battery_status():
+def batterystatus():
     cmd = f"adb {DEVICE_ID} shell dumpsys battery | grep level"
     process = execute_process(cmd, "Battery Status")
     home()
@@ -188,8 +223,8 @@ def battery_status():
     time.sleep(LONG_WAIT)
 
 
-def turn_on_bluetooth():
-    cmd = f"adb {DEVICE_ID} shell settings get global bluetooth_on "
+def turnonbluetooth():
+    cmd = f"adb {DEVICE_ID} shell settings get global bluetoothon "
     process = execute_process(cmd, "Turning On Bluetooth")
     home()
     time.sleep(SHORT_WAIT)
@@ -203,7 +238,7 @@ def turn_on_bluetooth():
 def start_package(package_name):
     cmd = f"adb {DEVICE_ID} shell monkey -p {package_name} -c android.intent.category.LAUNCHER 1"
     try:
-        stop_package(CONTACTS_PACKAGE)
+        stop_package(package_name)
         execute_process(cmd, "Launch Contacts App")
     except:
         pass
@@ -215,7 +250,7 @@ def add_contact():
 
     # perfom_tap(556, 1047) # add google account alert  -> cancel
 
-    cmd = f"adb {DEVICE_ID} shell \"input keyboard text 'Sebastian'\""
+    cmd = f"adb {DEVICE_ID} shell \"input keyboard text 'Seeb-{EVENT_COUNTER}'\""
     execute_process(cmd, "Inserting Contact First Name")
 
     time.sleep(SHORT_WAIT)
@@ -225,7 +260,7 @@ def add_contact():
 
     perfom_keyevent(KEYBOARD_ENTER)
 
-    cmd = f"adb {DEVICE_ID} shell \"input keyboard text 'Garcia'\""
+    cmd = f"adb {DEVICE_ID} shell \"input keyboard text 'Gar-{EVENT_COUNTER}'\""
     execute_process(cmd, "Inserting Contact Last Name")
 
     perfom_keyevent(KEYBOARD_ENTER)
@@ -257,6 +292,7 @@ def write_on_file(with_name, a_string):
 
 
 def take_screenshot(capture_name):
+    capture_name += "-Event-" + str(EVENT_COUNTER)
     cmd = f"adb {DEVICE_ID} shell screencap /sdcard/{capture_name}.png"
     execute_process(cmd, f"Taking Screenshot {capture_name}")
     time.sleep(SHORT_WAIT)
@@ -274,5 +310,36 @@ def write_report(text):
     REPORT += text
 
 
+def install_application(with_path):
+    cmd = f"adb {DEVICE_ID} install {with_path}"
+    try:
+        execute_process(cmd, "Installing Application")
+    except:
+        pass
+    time.sleep(LONG_WAIT)
+
+
+def uninstall_application(with_package_name):
+    cmd = f"adb {DEVICE_ID} uninstall {EXTERNAL_PACKAGE}"
+    try:
+        execute_process(cmd, "Uninstalling Application")
+    except:
+        pass
+    time.sleep(LONG_WAIT)
+
+
+def event_counter():
+    global EVENT_COUNTER
+    EVENT_COUNTER += 1
+    if EVENT_COUNTER % STUDENT_ID == 0:
+        print("\n*--> SE HACE BACK\n")
+        perfom_keyevent(BACK_KEY_EVENT)
+        write_report(
+            "<br/><p><strong>A back action was made here. </strong></p><br/>")
+        time.sleep(SHORT_WAIT)
+
+
 if __name__ == "__main__":
-    start_process()
+    n = input("Enter positive amount of actions to perfom:\n")
+    n = int(n) if int(n) > 0 else 1
+    start_process(n)
