@@ -97,7 +97,7 @@ def start_process():
         f"<br/> <br/> <p> <strong>5.</strong> &nbsp;Launch Contacts App</p>")
     take_screenshot("ContactsApp")
 
-    add_contact()  # screen shot make inside function
+    add_contact()  # screen shot made inside function
     home()
 
     start_package(CONTACTS_PACKAGE)  # show list of contacts
@@ -220,7 +220,8 @@ def add_contact():
     execute_process(cmd, "Inserting Contact First Name")
 
     time.sleep(SHORT_WAIT)
-    write_report("<br/> <br/> <p> <strong>4.1.</strong> &nbsp; Add Contact</p>")
+    write_report(
+        "<br/> <br/> <p> <strong>4.1.</strong> &nbsp; Add Contact</p>")
     take_screenshot("Added")
 
     perfom_keyevent(KEYBOARD_ENTER)
@@ -231,7 +232,7 @@ def add_contact():
     perfom_keyevent(KEYBOARD_ENTER)
 
     cmd = f"adb {DEVICE_ID} shell \"input keyboard text '3901234567'\""
-    execute_process(cmd, "Inserting Contact Last Name")
+    execute_process(cmd, "Inserting Contact Phone")
 
     perfom_tap(990, 135)  # save button
     time.sleep(LONG_WAIT)
@@ -249,7 +250,8 @@ def write_on_file(with_name, a_string):
     data = ""
     with open(with_name, "rt") as website:
         data = website.read()
-        data = data.replace(PLACEHOLDER, a_string) # placeholder on HTML file to replace with report
+        # placeholder on HTML file to replace with report
+        data = data.replace(PLACEHOLDER, a_string)
 
     with open(with_name, 'wt') as website:
         website.write(data)
@@ -264,7 +266,8 @@ def take_screenshot(capture_name):
     cmd = f"adb {DEVICE_ID} pull /sdcard/{capture_name}.png {local_image_file}"
     process = execute_process(cmd, f"Recovering Screenshot {capture_name}")
 
-    write_report(f" <img src=\"{local_image_file}\"  alt=\"{capture_name}\" height=300 /> ")
+    write_report(
+        f" <img src=\"{local_image_file}\"  alt=\"{capture_name}\" height=300 /> ")
 
 
 def write_report(text):
